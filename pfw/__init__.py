@@ -6,4 +6,4 @@ sys.path.  This package marker exists for tooling (version detection by the
 QuickOpen deb/usi builders) and for ``python -m`` style imports in tests.
 """
 
-__version__ = "1.0.11"
+__version__ = "1.0.12"

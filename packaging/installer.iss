@@ -7,7 +7,7 @@
 ; dashboard.html, README.md, FEATURES.md, LICENSE, quickopen-root.crt.
 
 #define AppName "PrivateFirewall"
-#define AppVersion "1.0.11"
+#define AppVersion "1.0.12"
 #define AppPublisher "QuickOpen (quickopen.ai)"
 #define AppURL "https://quickopen.ai/projects/private-firewall"
 
@@ -52,7 +52,7 @@ WizardSmallImageFile=branding\wizard-small.bmp
 AppCopyright=Apache-2.0. 100%% AI-built, published on QuickOpen (quickopen.ai).
 VersionInfoCompany=QuickOpen
 VersionInfoProductName=PrivateFirewall
-VersionInfoVersion=1.0.11.0
+VersionInfoVersion=1.0.12.0
 ; Firewall control requires administrator rights.
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64compatible

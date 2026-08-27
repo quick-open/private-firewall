@@ -158,6 +158,61 @@ def op_pids(args):
     return out
 
 
+NM_IPV6_STATE = "/var/lib/quickopen/private-firewall/ipv6-profiles.json"
+
+
+def _nm_ipv6(disable):
+    """Keep NetworkManager in step with the sysctl (1.0.12, Quick OS laptop
+    sweep 2026-08-27). With disable_ipv6=1 and a profile still at
+    ipv6.method=auto, NM retried link-local configuration every ~15 s for
+    days -- 14,914 "IPv6 is disabled on this device" warnings in one boot.
+    Blocking: every wired/Wi-Fi profile at auto/dhcp goes to `disabled` and
+    the list is remembered; unblocking restores exactly those to `auto`.
+    Best effort: no nmcli (not NM-managed) is not an error."""
+    nmcli = shutil.which("nmcli")
+    if not nmcli:
+        return []
+    touched = []
+    try:
+        if disable:
+            out = subprocess.run([nmcli, "-t", "-f", "UUID,TYPE", "connection", "show"],
+                                 capture_output=True, text=True, timeout=20).stdout
+            for line in out.splitlines():
+                uuid, _, ctype = line.partition(":")
+                if ctype not in ("802-11-wireless", "802-3-ethernet"):
+                    continue
+                m = subprocess.run([nmcli, "-g", "ipv6.method", "connection", "show", uuid],
+                                   capture_output=True, text=True, timeout=20).stdout.strip()
+                if m not in ("auto", "dhcp", "link-local", ""):
+                    continue
+                r = subprocess.run([nmcli, "connection", "modify", uuid, "ipv6.method", "disabled"],
+                                   capture_output=True, text=True, timeout=20)
+                if r.returncode == 0:
+                    touched.append({"uuid": uuid, "method": m or "auto"})
+            os.makedirs(os.path.dirname(NM_IPV6_STATE), exist_ok=True)
+            with open(NM_IPV6_STATE, "w") as f:
+                json.dump(touched, f)
+        else:
+            try:
+                with open(NM_IPV6_STATE) as f:
+                    prev = json.load(f)
+            except (OSError, ValueError):
+                prev = []
+            for ent in prev:
+                r = subprocess.run([nmcli, "connection", "modify", ent["uuid"],
+                                    "ipv6.method", ent.get("method") or "auto"],
+                                   capture_output=True, text=True, timeout=20)
+                if r.returncode == 0:
+                    touched.append(ent)
+            try:
+                os.unlink(NM_IPV6_STATE)
+            except OSError:
+                pass
+    except Exception:
+        pass
+    return touched
+
+
 def op_sysctl_ipv6(args):
     disable = "1" if args.get("disable") else "0"
     wrote = []
@@ -169,7 +224,8 @@ def op_sysctl_ipv6(args):
             wrote.append(key)
         except OSError as e:
             return {"ok": False, "err": f"{path}: {e}"}
-    return {"ok": True, "wrote": wrote}
+    nm = _nm_ipv6(disable == "1")
+    return {"ok": True, "wrote": wrote, "nm_profiles": [t["uuid"] for t in nm]}
 
 
 def op_kill(args):
