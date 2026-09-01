@@ -118,8 +118,8 @@ one-click installer from the [QuickOpen page](https://quickopen.ai/projects/priv
 **Ubuntu 24.04 (apt repo):**
 
 ```sh
-curl -fsSL https://r2.quickopen.io/aiquick-apt/quickopen-archive-keyring.gpg | sudo tee /usr/share/keyrings/quickopen-archive-keyring.gpg >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/quickopen-archive-keyring.gpg] https://r2.quickopen.io/aiquick-apt noble main" | sudo tee /etc/apt/sources.list.d/aiquick.list
+sudo curl -fsSL https://r2.quickopen.io/aiquick-apt/aiquick-archive-keyring.gpg -o /usr/share/keyrings/aiquick-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/aiquick-archive-keyring.gpg] https://r2.quickopen.io/aiquick-apt stable main" | sudo tee /etc/apt/sources.list.d/aiquick.list
 sudo apt update && sudo apt install quickopen-private-firewall
 ```
 
