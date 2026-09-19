@@ -224,6 +224,14 @@ def op_sysctl_ipv6(args):
             wrote.append(key)
         except OSError as e:
             return {"ok": False, "err": f"{path}: {e}"}
+    # Loopback keeps IPv6 either way: xrdp-sesman listens on [::1]:3350 and
+    # RDP dies without it (Supermicro H12, 2026-09-02). "Block all IPv6" is
+    # about the network, not the host talking to itself.
+    try:
+        with open("/proc/sys/net/ipv6/conf/lo/disable_ipv6", "w") as f:
+            f.write("0")
+    except OSError:
+        pass
     nm = _nm_ipv6(disable == "1")
     return {"ok": True, "wrote": wrote, "nm_profiles": [t["uuid"] for t in nm]}
 
