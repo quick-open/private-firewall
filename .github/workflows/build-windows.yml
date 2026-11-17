@@ -54,7 +54,7 @@ jobs:
           Copy-Item pfw/dashboard.html $stage/ -ErrorAction SilentlyContinue
           Get-ChildItem *.ps1 | Copy-Item -Destination $stage/
           Copy-Item Install.cmd $stage/ -ErrorAction SilentlyContinue
-          Copy-Item quickopen-root.crt, README.md, FEATURES.md, LICENSE $stage/ -ErrorAction SilentlyContinue
+          Copy-Item README.md, FEATURES.md, LICENSE $stage/ -ErrorAction SilentlyContinue
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
