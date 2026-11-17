@@ -4,7 +4,7 @@
 ; and the QuickOpen Root CA. Compiled and Authenticode-signed in CI.
 ;
 ; Expects packaging\staging\ to hold: PrivateFirewall.exe, *.ps1, Install.cmd,
-; dashboard.html, README.md, FEATURES.md, LICENSE, quickopen-root.crt.
+; dashboard.html, README.md, FEATURES.md, LICENSE.
 
 #define AppName "PrivateFirewall"
 #define AppVersion "1.0.12"
@@ -66,7 +66,6 @@ BeveledLabel=QuickOpen · quickopen.ai
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"
-Name: "trustca"; Description: "Trust the QuickOpen Root CA (lets Windows verify QuickOpen signatures)"; GroupDescription: "Security:"; Flags: unchecked
 Name: "bootlockdown"; Description: "Enforce default-deny-outbound at boot (persistent firewall lockdown). Advanced — you can undo this anytime from the app or Revert-PrivateFirewall.ps1."; GroupDescription: "Firewall:"; Flags: unchecked
 
 [Files]
@@ -74,7 +73,6 @@ Source: "staging\PrivateFirewall.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "staging\dashboard.html"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "staging\*.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "staging\Install.cmd"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "staging\quickopen-root.crt"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "staging\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme skipifsourcedoesntexist
 Source: "staging\FEATURES.md"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "staging\LICENSE"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
@@ -85,7 +83,8 @@ Name: "{group}\Uninstall PrivateFirewall"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\PrivateFirewall"; Filename: "{app}\PrivateFirewall.exe"; IconFilename: "{app}\PrivateFirewall.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "certutil.exe"; Parameters: "-addstore Root ""{app}\quickopen-root.crt"""; Tasks: trustca; Flags: runhidden; StatusMsg: "Trusting the QuickOpen Root CA..."
+Filename: "certutil.exe"; Parameters: "-user -delstore Root 771eafedccb23be0c44f6484be967670369aefb0"; Flags: runhidden; StatusMsg: "Removing the retired QuickOpen Root CA..."
+Filename: "certutil.exe"; Parameters: "-delstore Root 771eafedccb23be0c44f6484be967670369aefb0"; Flags: runhidden; Check: IsAdminInstallMode
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Install-PrivateFirewall.ps1"" -BootLockdown"; Tasks: bootlockdown; Flags: runhidden; StatusMsg: "Arming boot-time default-deny outbound..."
 ; shellexec is REQUIRED here, not cosmetic. PrivateFirewall.exe is built with
 ; --uac-admin (requireAdministrator in its manifest) because it drives the
@@ -99,6 +98,8 @@ Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Fil
 Filename: "{app}\PrivateFirewall.exe"; Description: "Launch PrivateFirewall now (Windows will ask for administrator rights)"; Flags: nowait postinstall skipifsilent shellexec
 
 [UninstallRun]
+Filename: "certutil.exe"; Parameters: "-user -delstore Root 771eafedccb23be0c44f6484be967670369aefb0"; Flags: runhidden; RunOnceId: "QODelRetiredRootUser"
+Filename: "certutil.exe"; Parameters: "-delstore Root 771eafedccb23be0c44f6484be967670369aefb0"; Flags: runhidden; RunOnceId: "QODelRetiredRootMachine"; Check: IsAdminInstallMode
 ; Tear down the firewall rules, scheduled tasks and boot lockdown this app added.
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Revert-PrivateFirewall.ps1"" -Revert -Uninstall"; Flags: runhidden skipifdoesntexist; RunOnceId: "PfwRevert"
 
